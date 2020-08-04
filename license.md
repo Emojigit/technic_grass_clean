@@ -7,3 +7,4 @@ Note: I am call Emoji(Service) on most all place, for example, my name is Emojig
 Except but not only:
  - Emojiwiki on wikimedia
  - Emojinotabug on NotABug
+ - In most licenses, i will use Emoji to be my nickname.
