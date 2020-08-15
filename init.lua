@@ -242,7 +242,7 @@ minetest.register_tool("technic_grass_clean:grass_cleaner", {
 		-- chainsaw will stop after digging a number of nodes
 		meta.charge = chainsaw_dig(pointed_thing.under, meta.charge)
 		if not technic.creative_mode then
-			technic.set_RE_wear(itemstack, meta.charge, chainsaw_max_charge)
+			technic.set_RE_wear(itemstack, meta.charge, grassc_max_charge)
 			itemstack:set_metadata(minetest.serialize(meta))
 		end
 		return itemstack
