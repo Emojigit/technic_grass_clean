@@ -43,8 +43,6 @@ end
 
 local S = technic.getter
 
-technic.register_power_tool("technic_grass_clean:grass_cleaner", grassc_max_charge)
-
 -- This function checks if the specified node should be sawed
 local function check_if_node_sawed(pos)
 	local node_name = minetest.get_node(pos).name
@@ -79,7 +77,7 @@ end
 -- @param pos Sawing position.
 local function iterSawTries(pos)
 	-- Copy position to prevent mangling it
-	local pos = vector.new(pos)
+	pos = vector.new(pos)
 	local i = 0
 
 	return function()
@@ -214,27 +212,58 @@ local function chainsaw_dig(pos, current_charge)
 	return remaining_charge
 end
 
+local function can_cut(user, pointed_thing)
+	if pointed_thing.type ~= "node" then
+		return false
+	end
+	local name = user:get_player_name()
+	if minetest.is_protected(pointed_thing.under, name) then
+		minetest.record_protection_violation(pointed_thing.under, name)
+		return false
+	end
+	return true
+end
 
-minetest.register_tool("technic_grass_clean:grass_cleaner", {
+local tooldef = {
 	description = "Grass Cleaner",
 	inventory_image = "technic_chainsaw.png",
-	stack_max = 1,
-	wear_represents = "technic_RE_charge",
-	on_refill = technic.refill_RE_charge,
-	on_use = function(itemstack, user, pointed_thing)
-		if pointed_thing.type ~= "node" then
-			return itemstack
+}
+
+if technic.plus then
+	-- Technic Plus
+	tooldef.max_charge = grassc_max_charge
+	tooldef.on_use = function(itemstack, user, pointed_thing)
+		if not can_cut(user, pointed_thing) then
+			return
+		end
+
+		local charge = technic.get_RE_charge(itemstack)
+		if charge < chainsaw_charge_per_node then
+			return
+		end
+
+		-- Send current charge to digging function so that the
+		-- chainsaw will stop after digging a number of nodes
+		charge = chainsaw_dig(pointed_thing.under, charge)
+		if not technic.creative_mode then
+			technic.set_RE_charge(itemstack, charge)
+		end
+		return itemstack
+	end
+	technic.register_power_tool("technic_grass_clean:grass_cleaner", tooldef)
+else
+	-- Original Technic
+	tooldef.stack_max = 1
+	tooldef.wear_represents = "technic_RE_charge"
+	tooldef.on_refill = technic.refill_RE_charge
+	tooldef.on_use = function(itemstack, user, pointed_thing)
+		if not can_cut(user, pointed_thing) then
+			return
 		end
 
 		local meta = minetest.deserialize(itemstack:get_metadata())
 		if not meta or not meta.charge or
 				meta.charge < chainsaw_charge_per_node then
-			return
-		end
-
-		local name = user:get_player_name()
-		if minetest.is_protected(pointed_thing.under, name) then
-			minetest.record_protection_violation(pointed_thing.under, name)
 			return
 		end
 
@@ -246,6 +275,7 @@ minetest.register_tool("technic_grass_clean:grass_cleaner", {
 			itemstack:set_metadata(minetest.serialize(meta))
 		end
 		return itemstack
-	end,
-})
-
+	end
+	technic.register_power_tool("technic_grass_clean:grass_cleaner", grassc_max_charge)
+	minetest.register_tool("technic_grass_clean:grass_cleaner", tooldef)
+end
