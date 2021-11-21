@@ -226,7 +226,9 @@ minetest.register_tool("technic_grass_clean:grass_cleaner", {
 			return itemstack
 		end
 
-		local meta = minetest.deserialize(itemstack:get_metadata())
+		local meta = technic.plus
+			and { charge = technic.get_RE_charge(itemstack) }
+			or minetest.deserialize(itemstack:get_metadata())
 		if not meta or not meta.charge or
 				meta.charge < chainsaw_charge_per_node then
 			return
